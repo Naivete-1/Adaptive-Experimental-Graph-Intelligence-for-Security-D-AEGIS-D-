@@ -1,182 +1,267 @@
 # AEGIS-D
+### Adaptive Experimental Graph Intelligence for Security — D
 
-**Adaptive Experimental Graph Intelligence for Security — D**
+**An experimental cloud security research platform exploring adaptive incident response using reinforcement learning, attack graphs, and controlled simulation.**
 
-A cloud security research prototype that investigates a single question:
+Can an agent learn to select incident-response strategies that reduce security risk while minimising disruption to legitimate services — and outperform fixed response rules on previously unseen incidents?
 
-> Can an agent learn to select incident-response strategies that reduce security risk while minimising disruption to legitimate services — and can it outperform fixed response rules on incidents it has not seen?
+AEGIS-D investigates this question through a reproducible, simulation-based evaluation framework.
 
-AEGIS-D is a local, simulated research platform. It does not connect to any cloud provider, does not execute containment actions, and does not establish real-world response effectiveness.
+> **Research prototype:** AEGIS-D operates entirely on synthetic security events and simulated infrastructure relationships. It does not connect to cloud providers, execute containment actions, or demonstrate real-world response effectiveness.
 
 ---
 
-## Result
+## Research Results
 
-Across 20 seeds, a tabular Q-learner improved on the best fixed response baseline by **8.94 % ± 1.44 %** on held-out scenarios, with positive improvement in every run.
+Across **20 random seeds**, a tabular Q-learning agent improved on the best fixed-response baseline by:
 
-The improvement is **regime-dependent**: when availability loss is weighted at or above risk reduction, the trivially optimal action (revoke privilege) matches the learned policy and no improvement remains. This defines an operating window in which adaptive response adds value — and, more usefully, when it does not.
+### 8.94% ± 1.44%
 
-Full methodology, weight sweeps, and a boundary characterisation are in [`RESULTS.md`](RESULTS.md).
+The improvement was positive in every run on held-out scenarios.
+
+However, the benefit is **regime-dependent**. When availability loss is weighted at or above risk reduction, the optimal fixed action — privilege revocation — matches the learned policy, eliminating the improvement.
+
+This identifies an operating window in which adaptive response adds value and conditions under which it does not.
+
+See [`RESULTS.md`](RESULTS.md) for the full methodology, weight sweeps, evaluation protocol, and boundary characterisation.
 
 ---
 
 ## Architecture
-events
-|
-v
-+-----------------------------+
-| Sentinel | rule-based detection
-+-----------------------------+
-|
-v alerts
-+-----------------------------+
-| Chronicle | correlation into incidents
-+-----------------------------+
-|
-v incidents
-+-----------------------------+
-| AttackGraph | identities / roles / services / resources
-+-----------------------------+
-|
-v
-+-----------------------------+
-| Bridge (incident to | derives scenario features from
-| scenario) | detection output
-+-----------------------------+
-|
-v scenarios
-+-----------------------------+
-| Counterfactual Engine | simulated outcome model
-+-----------------------------+
-|
-+-------------+-------------+
-v v
-Fixed baselines Adaptive Decision Engine
-(three rules) (tabular Q-learner)
-| |
-+-------------+-------------+
-v
-+-----------------------------+
-| Held-out evaluation | same test scenarios, all policies
-+-----------------------------+
 
-text
+```mermaid
+flowchart TD
+    A[Synthetic Security Events] --> B[Sentinel<br/>Rule-Based Detection]
+    B -->|Alerts| C[Chronicle<br/>Incident Correlation]
+    C -->|Incidents| D[AttackGraph<br/>Identity and Resource Relationships]
+    D --> E[Bridge<br/>Incident-to-Scenario Mapping]
+    E -->|Scenarios| F[Counterfactual Engine<br/>Simulated Outcomes]
+    F --> G[Fixed Response Baselines]
+    F --> H[Adaptive Decision Engine<br/>Tabular Q-Learning]
+    G --> I[Held-Out Evaluation]
+    H --> I
+    I --> J[FastAPI Dashboard<br/>Results and Analysis]
+```
 
-Every layer is implemented, tested, and integrated. The dashboard exposes the whole pipeline through a FastAPI backend.
+Every layer is implemented, tested, and integrated. The FastAPI application exposes the research pipeline through a web dashboard.
+
+### Core pipeline
+
+1. **Sentinel:** Detects suspicious activity using deterministic security rules.
+2. **Chronicle:** Correlates detection alerts into security incidents.
+3. **AttackGraph:** Represents assumed relationships between identities, roles, services, and resources.
+4. **Scenario Bridge:** Converts incident information into simulation scenarios.
+5. **Counterfactual Engine:** Estimates response outcomes using a documented simulation model.
+6. **Decision Engine:** Compares fixed-response strategies against a tabular Q-learning policy.
+7. **Held-Out Evaluation:** Evaluates policies on the same unseen scenarios for a controlled comparison.
+8. **Dashboard:** Presents incidents, attack graphs, policy comparisons, and experiment results.
 
 ---
 
-## What is real and what is simulated
+## What Is Real vs. Simulated?
 
-| Component | Status |
+| Component | Implementation status |
 |---|---|
-| Event generation | Synthetic, CloudTrail-flavoured |
-| Detection rules | Deterministic, with MITRE technique mapping |
-| Incident correlation | Real logic on synthetic data |
-| Attack graph | Assumed relationships, not verified IAM |
-| Response outcome model | Documented assumptions, not measurements |
-| RL agent | Tabular Q-learning, 9 states, 3 actions, one-step |
-| Evaluation | Real held-out protocol, simulated outcomes |
-| Cloud integration | **None** — the safe research direction is simulation first |
+| Security event generation | Synthetic, CloudTrail-flavoured events |
+| Threat detection | Deterministic rules with MITRE technique mapping |
+| Incident correlation | Implemented logic operating on synthetic data |
+| Attack graph | NetworkX graph of assumed access relationships |
+| Response outcome model | Simulation based on documented assumptions |
+| Reinforcement learning | Tabular Q-learning: 9 states, 3 actions, one-step decisions |
+| Evaluation | Held-out experimental protocol with simulated outcomes |
+| Cloud integration | Not implemented |
 
-Every assumption is documented in the code and in `RESULTS.md`. Nothing here has been validated against real incident data.
+All assumptions are documented in the code and research results. No claims of real-world effectiveness are made.
 
 ---
 
-## Quick start
+## Features
+
+- Synthetic cloud-security event generation
+- Rule-based threat detection and MITRE technique mapping
+- Security incident correlation and investigation
+- Graph-based representation of identities and access relationships
+- Simulated incident-response outcome modelling
+- Reinforcement learning for adaptive response selection
+- Comparison against three fixed-response baselines
+- Held-out evaluation across multiple random seeds
+- Sensitivity analysis and response-cost weight sweeps
+- Boundary characterisation to identify when adaptive response provides no advantage
+- Interactive dashboard for exploring results
+- Automated test suite with 155 tests
+
+---
+
+## Dashboard
+
+The dashboard provides five main views:
+
+| View | Description |
+|---|---|
+| **Overview** | Pipeline KPIs, attack-type distribution, and training cost curve |
+| **Attack Graph** | Interactive network of identities, roles, services, and resources |
+| **Investigation** | Security incidents, event timelines, and MITRE technique tags |
+| **Response Policy** | Learned policy compared with three fixed baselines on held-out data |
+| **Saved Runs** | Experiment history, configurations, and recorded results |
+
+---
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Language | Python 3.12 |
+| API backend | FastAPI, Uvicorn |
+| Graph analysis | NetworkX |
+| Reinforcement learning | Tabular Q-learning |
+| Frontend | HTML, CSS, JavaScript |
+| Visualisation | vis-network, Chart.js |
+| Testing | pytest |
+| Persistence | JSON files |
+| Research evaluation | Reproducible experiments, held-out scenarios, seed and weight sweeps |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.12
+- Git
+- A modern web browser
+
+### 1. Clone the repository
 
 ```powershell
-# Clone and set up
 git clone https://github.com/Naivete-1/AEGIS-D.git
 cd AEGIS-D
+```
+
+### 2. Create and activate a virtual environment
+
+```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
+
+### 3. Install dependencies
+
+```powershell
+python -m pip install --upgrade pip
 pip install -e ".[dev]"
+```
 
-# Run the test suite (155 tests)
+### 4. Run the test suite
+
+```powershell
 python -m pytest -v
+```
 
-# Run one full held-out experiment and save the result
-python scripts\run_experiment.py
+### 5. Run a held-out experiment
 
-# Seed sweep and weight sweep
-python scripts\analyse.py
+```powershell
+python scripts/run_experiment.py
+```
 
-# Boundary characterisation
-python scripts\boundary_sweep.py
+### 6. Run the analysis
 
-# Start the API and dashboard
+```powershell
+python scripts/analyse.py
+```
+
+### 7. Run boundary characterisation
+
+```powershell
+python scripts/boundary_sweep.py
+```
+
+### 8. Launch the dashboard
+
+```powershell
 python -m uvicorn aegis.api.main:app --reload
-Then open http://127.0.0.1:8000/.
+```
 
-Dashboard
-The dashboard has five views:
+Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
 
-Overview — pipeline KPIs, attack-type distribution, training cost curve
-
-Attack graph — interactive network of identities, roles, services, resources
-
-Investigation — incidents with event timelines and MITRE technique tags
-
-Response policy — learned policy vs. three fixed baselines on held-out data
-
-Saved runs — history of every experiment, with configuration and results
-
-Repository layout
-text
-AEGIS-D/
-├── src/aegis/
-│   ├── events/           Synthetic security events + schema
-│   ├── sentinel/         Rule-based detection
-│   ├── chronicle/        Incident correlation and incident-to-scenario bridge
-│   ├── attackgraph/      NetworkX graph of assumed access relationships
-│   ├── simulator/        Response outcome model
-│   ├── agents/           Tabular Q-learner and baselines
-│   ├── experiment/       Runner, persistence, robustness analysis
-│   ├── scenarios/        Synthetic scenario generator
-│   └── api/              FastAPI application
-├── frontend/             Dashboard (HTML / CSS / JS)
-├── scripts/              CLI entry points
-├── tests/                155 pytest tests
-├── results/              Experiment outputs (gitignored)
-└── RESULTS.md            Full methodology and results
-Technology
-Component	Technology
-Backend	Python 3.12, FastAPI, Uvicorn
-Detection	Deterministic rules (ML anomaly detection planned)
-Graph analysis	NetworkX
-Agent	Tabular Q-learning (Gymnasium-compatible env planned)
-Frontend	HTML, CSS, vanilla JavaScript, vis-network, Chart.js
-Testing	pytest
-Persistence	JSON files (SQLite planned)
-Limitations
-This is a research prototype, not a production security platform.
-
-Simulated outcomes. Response effects are documented assumptions.
-
-Hidden features. Attack type, detection confidence, and compromise scope influence outcomes but are not visible to the learning agent.
-
-One-step decisions. No sequential state transitions; the discount factor is 0.
-
-Uncalibrated weights. Cost weights and modulation factors are not justified against real incident data.
-
-No cloud integration. The system never touches real infrastructure.
-
-The central research contribution is the evidence produced by the held-out evaluation, not the number of technologies involved.
-
-License
-Not yet chosen. Until a license is added, all rights reserved.
-
-text
+**Note:** These commands reflect the current project structure. If your local package configuration uses a different import path or installation setup, follow the actual files in your repository.
 
 ---
 
-## After you commit it
+## Repository Structure
 
-Refresh the repo page — the README will render as the front page.
+```text
+AEGIS-D/
+├── src/
+│   └── aegis/
+│       ├── events/        # Synthetic events and schemas
+│       ├── sentinel/      # Rule-based threat detection
+│       ├── chronicle/     # Incident correlation and scenario bridge
+│       ├── attackgraph/   # Access relationship graphs
+│       ├── simulator/     # Response outcome simulation
+│       ├── agents/        # Q-learning agent and fixed baselines
+│       ├── experiment/    # Experiment execution and analysis
+│       ├── scenarios/     # Synthetic scenario generation
+│       └── api/           # FastAPI application
+├── frontend/              # HTML, CSS, and JavaScript dashboard
+├── scripts/               # Experiment and analysis entry points
+├── tests/                 # Automated test suite
+├── results/               # Generated experiment outputs (gitignored)
+├── RESULTS.md             # Research methodology and findings
+└── README.md
+```
 
-Two things to check:
-1. The architecture diagram renders as plain text (correct — it's in a code block, not a Mermaid diagram).
-2. The clone URL in the Quick start says `github.com/Naivete-1/AEGIS-D.git` — which won't work until you rename the repo. Either rename the repo to `AEGIS-D` (recommended, GitHub → Settings → General → Repository name), or edit that line to match your current repo name.
+---
 
-Once it's live, say the word and we start the cloud-event refactor.
+## Research Limitations
+
+AEGIS-D is an experimental research prototype, not a production security platform.
+
+1. **Simulated outcomes:** Response effects are based on documented assumptions, not measured cloud incidents.
+2. **Partial observability:** The learning agent does not observe every feature influencing the simulated outcome, including attack type, detection confidence, and compromise scope.
+3. **One-step decisions:** The current agent makes one-step decisions, with a discount factor of zero. It does not model sequential response planning.
+4. **Uncalibrated cost weights:** The cost weights and modulation factors have not been validated against real incident data.
+5. **Assumed attack relationships:** The attack graph represents modelled relationships, not verified cloud IAM permissions.
+6. **No cloud integration:** The platform does not connect to or modify real infrastructure.
+7. **Limited generalisability:** Results from synthetic scenarios do not establish performance on real-world attacks.
+
+The primary research contribution is the evidence generated by the held-out evaluation, including its limitations and the conditions under which adaptive response does or does not outperform fixed rules.
+
+---
+
+## Future Research Directions
+
+Potential extensions include:
+
+- Integration with sanitised, real-world security event datasets
+- Cloud-event ingestion and schema normalisation
+- More expressive state representations for the learning agent
+- Sequential incident-response policies
+- Calibration of response costs using empirical evidence
+- Comparison with additional reinforcement learning algorithms
+- Controlled evaluation against realistic cloud-security scenarios
+
+These are future directions, not claims of existing functionality.
+
+---
+
+## Security and Responsible Use
+
+AEGIS-D is designed for research and experimentation in a controlled local environment.
+
+- Uses synthetic security events.
+- Does not perform live attacks or cloud containment.
+- Does not require production cloud credentials.
+- Should not be used as an autonomous incident-response system.
+
+---
+
+## License
+
+No open-source licence has been selected yet. Until a licence is added to the repository, all rights remain reserved by the copyright holder.
+
+---
+
+**Author:** Naivete Makobe  
+**GitHub:** [@Naivete-1](https://github.com/Naivete-1)
+
+*AEGIS-D — Investigating when adaptive security response is worth the cost.*
