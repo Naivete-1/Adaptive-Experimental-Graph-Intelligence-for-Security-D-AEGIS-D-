@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS-D · Security Operations</title>
+<link rel="stylesheet" href="/static/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ─── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="brand-name">AEGIS-D</div>
+        <div class="brand-sub">Security Operations</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="overview">
+        <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Overview</span>
+      </button>
+      <button class="nav-item" data-view="graph">
+        <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3c0 1.3.84 2.4 2 2.82V10H8a2 2 0 0 0-2 2v2.18A3 3 0 0 0 4 17a3 3 0 1 0 6 0c0-1.3-.84-2.4-2-2.82V13h8v1.18A3 3 0 0 0 14 17a3 3 0 1 0 6 0 3 3 0 0 0-2-2.82V12a2 2 0 0 0-2-2h-3V7.82A3 3 0 0 0 15 5a3 3 0 0 0-3-3z"/></svg>
+        <span>Attack graph</span>
+      </button>
+      <button class="nav-item" data-view="investigation">
+        <svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.55 3.42 10.74 8 12 4.58-1.26 8-6.45 8-12V5l-8-3zm-1 15-4-4 1.41-1.41L11 14.17l4.59-4.58L17 11l-6 6z"/></svg>
+        <span>Investigation</span>
+      </button>
+      <button class="nav-item" data-view="experiment">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+        <span>Response policy</span>
+      </button>
+      <button class="nav-item" data-view="runs">
+        <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        <span>Saved runs</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-dot"></div>
+      <div>
+        <div class="status-label">Local prototype</div>
+        <div class="status-sub">Simulated environment</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── Main content ────────────────────────────────────── -->
+  <div class="content">
+
+    <header class="topbar">
+      <div class="topbar-title" id="view-title">Overview</div>
+      <div class="topbar-right">
+        <span class="pill pill-info">Simulated environment</span>
+        <span class="pill pill-good">API online</span>
+      </div>
+    </header>
+
+    <!-- Overview ───────────────────────────────────────── -->
+    <section class="view active" data-view="overview">
+      <div class="hero">
+        <div class="hero-left">
+          <div class="hero-eyebrow">Research prototype</div>
+          <h1>Adaptive incident response, evaluated in simulation.</h1>
+          <p>An agent learns to select response strategies that reduce risk without unnecessary disruption — and is compared against fixed baselines on scenarios it never saw during training.</p>
+          <div class="hero-actions">
+            <button id="hero-run-experiment" class="btn-primary">Run experiment</button>
+            <button id="hero-run-pipeline" class="btn-ghost">Generate demo incident</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-label">Events analyzed</div>
+          <div class="metric-value" id="m-events">—</div>
+          <div class="metric-sub" id="m-events-sub">run pipeline</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Alerts fired</div>
+          <div class="metric-value" id="m-alerts">—</div>
+          <div class="metric-sub" id="m-alerts-sub">run pipeline</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Incidents correlated</div>
+          <div class="metric-value" id="m-incidents">—</div>
+          <div class="metric-sub" id="m-incidents-sub">run pipeline</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Learned policy improvement</div>
+          <div class="metric-value accent" id="m-improvement">—</div>
+          <div class="metric-sub" id="m-improvement-sub">run experiment</div>
+        </div>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Attack type distribution</div>
+            <div class="panel-hint" id="dist-hint">run pipeline to populate</div>
+          </div>
+          <div class="panel-body chart-box"><canvas id="chart-attack-types"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Training cost curve</div>
+            <div class="panel-hint">rolling mean, lower is better</div>
+          </div>
+          <div class="panel-body chart-box"><canvas id="chart-training"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Attack graph ───────────────────────────────────── -->
+    <section class="view" data-view="graph">
+      <div class="panel-grid grid-graph">
+        <div class="panel panel-flush">
+          <div class="panel-head">
+            <div class="panel-title">Attack graph</div>
+            <div class="panel-hint">Assumed relationships, not verified permissions</div>
+          </div>
+          <div id="graph-viz"></div>
+          <div class="legend">
+            <span><i style="background:#a78bfa"></i>Identity</span>
+            <span><i style="background:#60a5fa"></i>Role</span>
+            <span><i style="background:#f472b6"></i>Service</span>
+            <span><i style="background:#34d399"></i>Resource</span>
+            <span><i style="background:transparent;border:2px solid #f87171"></i>High sensitivity</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Path trace</div>
+          </div>
+          <div class="panel-body">
+            <label class="field-label">From identity</label>
+            <div class="field-row">
+              <input id="g-id" type="text" value="identity:user:bob">
+              <button id="trace-btn" class="btn-primary btn-sm">Trace</button>
+            </div>
+            <div id="graph-paths" class="paths-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Investigation ──────────────────────────────────── -->
+    <section class="view" data-view="investigation">
+      <div class="panel-grid grid-split">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Incidents</div>
+            <div class="panel-hint" id="inc-hint">no data yet</div>
+          </div>
+          <div id="incident-list" class="incident-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Incident timeline</div>
+            <div class="panel-hint" id="inc-detail-hint">select an incident</div>
+          </div>
+          <div id="incident-detail" class="incident-detail">
+            <div class="empty">Run the detection pipeline to view an incident timeline.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Experiment ─────────────────────────────────────── -->
+    <section class="view" data-view="experiment">
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="metric-label">Improvement vs. best baseline</div>
+          <div class="metric-value accent" id="x-improvement">—</div>
+          <div class="metric-sub" id="x-improvement-sub">not run</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Best fixed baseline</div>
+          <div class="metric-value small" id="x-baseline">—</div>
+          <div class="metric-sub">lowest mean cost among fixed rules</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Held-out scenarios</div>
+          <div class="metric-value" id="x-test-count">—</div>
+          <div class="metric-sub" id="x-train-count">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Training episodes</div>
+          <div class="metric-value" id="x-episodes">—</div>
+          <div class="metric-sub">tabular Q-learning</div>
+        </div>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Mean cost by policy</div>
+            <div class="panel-hint">lower is better</div>
+          </div>
+          <div class="panel-body chart-box"><canvas id="chart-policies"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Learned policy</div>
+            <div class="panel-hint">action per (severity, criticality) state</div>
+          </div>
+          <div class="panel-body" id="policy-table"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Full comparison</div>
+        </div>
+        <div class="panel-body" id="policy-comparison"></div>
+      </div>
+    </section>
+
+    <!-- Runs ───────────────────────────────────────────── -->
+    <section class="view" data-view="runs">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Experiment history</div>
+          <button id="refresh-runs" class="btn-ghost btn-sm">Refresh</button>
+        </div>
+        <div class="panel-body" id="runs-table">
+          <div class="empty">Click refresh to load saved runs.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
